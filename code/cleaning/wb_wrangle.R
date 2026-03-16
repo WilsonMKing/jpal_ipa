@@ -100,17 +100,28 @@ northam <- c("Canada", "United States", "Mexico", "Guatemala", "Belize", "El Sal
 oceania <- c("Australia", "New Zealand", "Papua New Guinea", "Timor-Leste", "Fiji",
              "Kiribati", "Nauru", "Tonga", "Samoa", "Tuvalu", "Vanuatu", "Solomon Islands",
              "Marshall Islands", "Micronesia, Fed. Sts.", "Palau")
+lac <- c(southam, "Mexico", "Guatemala", "Belize", "El Salvador",
+         "Nicaragua", "Honduras", "Costa Rica", "Panama", "Cuba", "Dominican Republic",
+         "Haiti", "Jamaica", "St. Lucia", "St. Vincent and the Grenadines",
+         "St. Kitts and Nevis", "Antigua and Barbuda", "Barbados", "Bahamas, The",
+         "Trinidad and Tobago", "Dominica", "Grenada")
 
   ### Create Dummy Indicators
 wb_data %<>%
-  dplyr::mutate(continent = case_when(
-    country %in% asia ~ "Asia",
-    country %in% europe ~ "Europe",
-    country %in% oceania ~ "Oceania",
-    country %in% southam ~ "South America",
-    country %in% northam ~ "North America",
-    country %in% africa ~ "Africa",
-    TRUE ~ "Nothing"))
+  dplyr::mutate(
+    continent = case_when(
+      country %in% asia ~ "Asia",
+      country %in% europe ~ "Europe",
+      country %in% oceania ~ "Oceania",
+      country %in% southam ~ "South America",
+      country %in% northam ~ "North America",
+      country %in% africa ~ "Africa",
+      TRUE ~ "Nothing"),
+    region = case_when(
+      country %in% asia | country %in% oceania ~ "Asia-Pacific",
+      country %in% lac ~ "Latin America & Caribbean",
+      country %in% africa ~ "Africa",
+      (country %in% northam | country %in% europe) & !(country %in% lac) ~ "Europe, U.S., and Canada"))
 wb_data %<>% dplyr::filter(continent != "Nothing")
 
 ### Create Dummy Indicator for English Speaking Countries

@@ -4,7 +4,8 @@
 
 ### Create Analysis Dataset
 freqs_panel <- create_freqs_panel(wos_metadata) %>%
-  dplyr::filter(year >= 1995 & year <= 2024)
+  dplyr::filter(year >= 1995 & year <= 2024) %>%
+  dplyr::filter(country %in% dev_world)
 
 ### Create Storage for J-PAL Coefficients/SEs
 jpal_coefs <- list()
@@ -21,7 +22,7 @@ ipa_treated_countries <- unique(freqs_panel$country[freqs_panel$ipa_treated == 1
 ### Loop Through J-PAL Countries
 for(c in seq_along(jpal_treated_countries)){
   temp_df <- freqs_panel %>% dplyr::filter(country != jpal_treated_countries[c])
-  reg <- run_jpal_regressions(outcome = "frequency_rct", specification = "ols-binary-did", data = temp_df)
+  reg <- run_jpal_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-binary-did", data = temp_df)
   jpal_coefs[c] <- reg$coefficients[1]
   jpal_ses[c] <- reg$cse[1]
 }
@@ -29,7 +30,7 @@ for(c in seq_along(jpal_treated_countries)){
 ### Loop Through IPA Countries
 for(c in seq_along(ipa_treated_countries)){
   temp_df <- freqs_panel %>% dplyr::filter(country != ipa_treated_countries[c])
-  reg <- run_ipa_regressions(outcome = "frequency_rct", specification = "ols-binary-did", data = temp_df)
+  reg <- run_ipa_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-binary-did", data = temp_df)
   ipa_coefs[c] <- reg$coefficients[1]
   ipa_ses[c] <- reg$cse[1]
 }
@@ -51,8 +52,8 @@ jpal_results_df <- data.frame(
 ### Merge Results
 results_df <- rbind(ipa_results_df, jpal_results_df)
 
-reg1 <- run_ipa_regressions(outcome = "frequency_rct", specification = "ols-binary-did")
-reg2 <- run_jpal_regressions(outcome = "frequency_rct", specification = "ols-binary-did")
+reg1 <- run_ipa_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-binary-did")
+reg2 <- run_jpal_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-binary-did")
 
 ### Plot Results
 plot1 <- ggplot(jpal_results_df, 
@@ -97,13 +98,7 @@ plot2 <- ggplot(ipa_results_df,
 plot2
 
 ### Save Results
-ggsave(filename = paste0(exhibits, "jpal_leave_one_out.jpeg"), plot = plot1,
+ggsave(filename = paste0(exhibits, "jpal_leave_one_out_policy.jpeg"), plot = plot1,
        units = "cm", height = 10, width = 20)
-ggsave(filename = paste0(exhibits, "ipa_leave_one_out.jpeg"), plot = plot2,
+ggsave(filename = paste0(exhibits, "ipa_leave_one_out_policy.jpeg"), plot = plot2,
        units = "cm", height = 10, width = 20)
-
-################################################################################
-
-temp_df <- freqs_panel %>% dplyr::filter(country != "India")
-reg <- run_jpal_regressions(outcome = "frequency_rct", specification = "ols-binary-did", data = temp_df)
-writeLines(as.character(round(reg$cpval[1],2)), paste0(exhibits, "statistics/jpal_did_drop_india.tex"))

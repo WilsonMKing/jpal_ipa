@@ -3,20 +3,24 @@
 ################################################################################
 
 ### Create Frequency Panel
-freqs_panel <- create_freqs_panel(wos_data) %>%
-  dplyr::filter(year >= 1995)
+freqs_panel <- create_freqs_panel(wos_metadata) %>%
+  dplyr::filter(year >= 1995 & year <= 2024)
+
+### Set Formulas
+form1 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated | as.factor(country) + as.factor(year) + as.factor(independent) | 0 | country")
+form2 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated + log(population) | as.factor(country) + as.factor(year) + as.factor(independent) | 0 | country")
+form3 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(independent) | 0 | country")
+form4 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(independent) + as.factor(conflict) | 0 | country")
+form5 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(independent) + as.factor(conflict) + as.factor(regime) | 0 | country")
+form6 <- as.formula("frequency_rct ~ ipa_treated + jpal_treated + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(independent) + as.factor(conflict) + as.factor(regime) + as.factor(igc_treated) | 0 | country")
 
 ### Run Regressions
-
-### At Least One RCT
-reg4 <- run_ipa_regressions(outcome = "ifelse(frequency_experiments > 0, 1, 0)", specification = "ols-binary-did", controls = FALSE)
-reg5 <- run_jpal_regressions(outcome = "ifelse(frequency_experiments > 0, 1, 0)", specification = "ols-binary-did", controls = FALSE)
-reg6 <- run_jpal_regressions(outcome = "ifelse(frequency_experiments > 0, 1, 0)", specification = "ols-binary-did-both", controls = FALSE)
-
-### Number of RCTs
-reg1 <- run_ipa_regressions(outcome = "frequency_experiments", specification = "ols-binary-did", controls = FALSE)
-reg2 <- run_jpal_regressions(outcome = "frequency_experiments", specification = "ols-binary-did", controls = FALSE)
-reg3 <- run_jpal_regressions(outcome = "frequency_experiments", specification = "ols-binary-did-both", controls = FALSE)
+reg1 <- lfe::felm(form1, data = freqs_panel)
+reg2 <- lfe::felm(form2, data = freqs_panel)
+reg3 <- lfe::felm(form3, data = freqs_panel)
+reg4 <- lfe::felm(form4, data = freqs_panel)
+reg5 <- lfe::felm(form5, data = freqs_panel)
+reg6 <- lfe::felm(form6, data = freqs_panel)
 
 ### Create Table
 table <- stargazer::stargazer(
@@ -26,25 +30,29 @@ table <- stargazer::stargazer(
   header = FALSE,
   digits = 2,
   float = FALSE,
-  omit = c("Constant", "population", "gdp"),
-  covariate.labels = c("IPA Office", "J-PAL Office"),
+  omit = c("Constant"),
+  covariate.labels = c("IPA Office", "J-PAL Office", "Logged Population", "Logged GDP"),
   dep.var.labels.include = FALSE,
   dep.var.caption = "",
   omit.stat = c("rsq", "adj.rsq", "ser"),
   omit.table.layout = "n") %>%
   starpolishr::star_insert_row(
-    c("& \\multicolumn{3}{c}{Number of RCTs} & \\multicolumn{3}{c}{At Least One RCT} \\\\",
+    c("& \\multicolumn{6}{c}{Number of RCTs} \\\\",
       "\\cmidrule(lr){2-7}",
+      "Conflict FEs & No & No & No & Yes & Yes & Yes \\\\",
+      "Regime FEs & No & No & No & No & Yes & Yes \\\\",
+      "IGC FEs & No & No & No & No & No & Yes \\\\",
+      "\\hline",
       paste0(
         "Control Mean & ", 
-        round(sum(freqs_panel[freqs_panel$ever_ipa == 0,]$frequency_experiments) / nrow(freqs_panel[freqs_panel$ever_ipa == 0,]),2), " & ",
-        round(sum(freqs_panel[freqs_panel$ever_jpal == 0,]$frequency_experiments) / nrow(freqs_panel[freqs_panel$ever_jpal == 0,]),2), " & ",
-        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_experiments) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
-        round(sum(freqs_panel[freqs_panel$ever_ipa == 0,]$frequency_experiments > 0) / nrow(freqs_panel[freqs_panel$ever_ipa == 0,]),2), " & ",
-        round(sum(freqs_panel[freqs_panel$ever_jpal == 0,]$frequency_experiments > 0) / nrow(freqs_panel[freqs_panel$ever_jpal == 0,]),2), " & ",
-        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_experiments > 0) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " \\\\"),
-      "Controls & No & No & No & No & No & No \\\\"),
-    insert.after = c(4,4,14,14))
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " & ",
+        round(sum(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]$frequency_rct) / nrow(freqs_panel[freqs_panel$ever_ipa == 0 & freqs_panel$ever_jpal == 0,]),2), " \\\\")),
+    insert.after = c(4,4,19,19,19,19,20))
+table
 
 ### Save
 starpolishr::star_tex_write(table, file = paste0(exhibits, "tables/jpal_ipa_did_no_controls.tex"))

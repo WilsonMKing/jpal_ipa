@@ -1,10 +1,12 @@
 ################################################################################
-################## Create Plot of J-PAL/IPA Event Study Results ################
+########## Event Study for Effects of J-PAL and IPA on Policy Outcomes #########
 ################################################################################
 
 ### Create Frequency Panel
 freqs_panel <- create_freqs_panel(wos_metadata) %>%
-  dplyr::filter(year >= 1995 & year <= 2024)
+  dplyr::filter(year >= 1995 & year <= 2024) %>%
+  dplyr::filter(country %in% dev_world)
+  
 
 ### Estimate OLS Fixed Effects Model
 
@@ -13,10 +15,10 @@ twfe_ols <- list()
 twfe_sa <- list()
 
 ### Run Regressions
-twfe_ols[["jpal"]] <- run_jpal_regressions(outcome = "frequency_rct", specification = "ols-event-study")
-twfe_sa[["jpal"]] <- run_jpal_regressions(outcome = "frequency_rct", specification = "sa-event-study")
-twfe_ols[["ipa"]] <- run_ipa_regressions(outcome = "frequency_rct", specification = "ols-event-study")
-twfe_sa[["ipa"]] <- run_ipa_regressions(outcome = "frequency_rct", specification = "sa-event-study")
+twfe_ols[["jpal"]] <- run_jpal_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-event-study")
+twfe_sa[["jpal"]] <- run_jpal_regressions(outcome = "frequency_policy_doc_rct", specification = "sa-event-study")
+twfe_ols[["ipa"]] <- run_ipa_regressions(outcome = "frequency_policy_doc_rct", specification = "ols-event-study")
+twfe_sa[["ipa"]] <- run_ipa_regressions(outcome = "frequency_policy_doc_rct", specification = "sa-event-study")
 
 ### Save Results
 event_study_results <- 
@@ -65,17 +67,15 @@ event_study_results %>%
   ) +
   geom_hline(yintercept = 0) +
   xlab("Years Relative to Treatment") +
-  ylab("Number of RCTs") +
+  ylab("Number of Policy Documents Referencing RCTs") +
   theme_classic() +
   theme(
     legend.position = c(0.2, 0.8),
     legend.title = element_blank(),
     legend.text = element_text(size = 12),
-    text = element_text(family = "Times")
-  )
+    text = element_text(family = "Times"))
 
-
-ggsave(filename = paste0(exhibits, "figures/ipa_event_study.jpeg"), plot = last_plot(),
+ggsave(filename = paste0(exhibits, "figures/ipa_event_study_policy.jpeg"), plot = last_plot(),
        units = "cm", width = 15, height = 10)
 
 pd <- position_dodge(width = 0.8)
@@ -87,35 +87,19 @@ event_study_results %>%
   geom_errorbar(aes(ymin = coef - 1.96*se, ymax = coef + 1.96*se), position = pd, width = 0.2, color = "orange") +
   geom_line(position = pd, color = "orange", linewidth = 1) +
   geom_point(position = pd, color = "orange", size = 1) +
-  # use a fixed numeric position: the index of "-1" in the factor
   geom_vline(
     xintercept = which(sort(unique(event_study_results$bins)) == -1),
     linetype = 2
   ) +
   geom_hline(yintercept = 0) +
   xlab("Years Relative to Treatment") +
-  ylab("Number of RCTs") +
+  ylab("Number of Policy Documents Referencing RCTs") +
   theme_classic() +
   theme(legend.position = c(0.2,0.8),
         legend.title = element_blank(),
         legend.text = element_text(size = 12),
         text = element_text(family = "Times"))
 
-
-ggsave(filename = paste0(exhibits, "figures/jpal_event_study.jpeg"), plot = last_plot(),
+ggsave(filename = paste0(exhibits, "figures/jpal_event_study_policy.jpeg"), plot = last_plot(),
        units = "cm", width = 15, height = 10)
 
-
-################################################################################
-
-writeLines(as.character(
-  event_study_results %>% 
-    dplyr::filter(outcome == "Abdul Latif Jameel Poverty Action Lab" & bins == 10 & estimator == "OLS") 
-  %>% pull(coef) %>% round(., 2)),
-  paste0(exhibits, "jpal_coef_10_years.tex"))
-
-writeLines(as.character(
-  event_study_results %>% 
-    dplyr::filter(outcome == "Innovations for Poverty Action" & bins == 10 & estimator == "OLS") 
-  %>% pull(coef) %>% round(., 2)),
-  paste0(exhibits, "ipa_coef_10_years.tex"))

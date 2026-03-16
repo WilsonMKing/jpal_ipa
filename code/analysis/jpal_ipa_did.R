@@ -49,3 +49,6 @@ table
 
 ### Save
 starpolishr::star_tex_write(table, file = paste0(exhibits, "tables/jpal_ipa_did.tex"))
+
+################################################################################
+

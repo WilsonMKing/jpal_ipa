@@ -8,7 +8,7 @@ run_ipa_regressions <- function(outcome, data = freqs_panel, specification, cont
   ### OLS Event Study Specification
   if(specification == "ols-event-study"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ i(time_to_ipa, ever_ipa, ref = -1) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated)"))
+      form <- as.formula(paste0(outcome, " ~ i(time_to_ipa, ever_ipa, ref = -1) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated) + as.factor(jpal_treated)"))
       regression <- fixest::feols(form, cluster = ~country, data = data, se = "cluster")
     } else {
       form <- as.formula(paste0(outcome, " ~ i(time_to_ipa, ever_ipa, ref = -1) | as.factor(country) + as.factor(year)"))
@@ -19,7 +19,7 @@ run_ipa_regressions <- function(outcome, data = freqs_panel, specification, cont
   ### Sun & Abraham Event Study Specification
   if(specification == "sa-event-study"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ sunab(ipa, time_to_ipa) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated)"))
+      form <- as.formula(paste0(outcome, " ~ sunab(ipa, time_to_ipa) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated) + as.factor(jpal_treated)"))
       regression <- fixest::feols(form, cluster = ~country, data = data, se = "cluster")
     } else {
       form <- as.formula(paste0(outcome, " ~ sunab(ipa, time_to_ipa) | as.factor(country) + as.factor(year)"))
@@ -41,10 +41,10 @@ run_ipa_regressions <- function(outcome, data = freqs_panel, specification, cont
   ### OLS Binary Difference-in-Differences Specification w/ Region Fixed Effects
   if(specification == "ols-binary-did-region-fes"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ ipa_treated + log(population) + log(gdp) + as.factor(continent)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(igc_treated) + as.factor(independent) | 0 | country"))
+      form <- as.formula(paste0(outcome, " ~ ipa_treated + log(population) + log(gdp) + as.factor(region)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(igc_treated) + as.factor(independent) | 0 | country"))
       regression <- lfe::felm(form, data = data)
     } else {
-      form <- as.formula(paste0(outcome, " ~ ipa_treated | as.factor(country) + as.factor(year) + as.factor(continent)*as.factor(year) | 0 | country"))
+      form <- as.formula(paste0(outcome, " ~ ipa_treated | as.factor(country) + as.factor(year) + as.factor(region)*as.factor(year) | 0 | country"))
       regression <- lfe::felm(form, data = data)
     }
   }
@@ -56,6 +56,17 @@ run_ipa_regressions <- function(outcome, data = freqs_panel, specification, cont
       regression <- lfe::felm(form, data = data)
     } else {
       form <- as.formula(paste0(outcome, " ~ ipa_treated + bordering_ipa_treated | as.factor(country) + as.factor(year) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    }
+  }
+  
+  ### OLS Binary Difference-in-Differences Specification
+  if(specification == "ols-binary-did-pop"){
+    if(controls == TRUE){
+      form <- as.formula(paste0(outcome, " ~ ipa_treated*log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    } else {
+      form <- as.formula(paste0(outcome, " ~ ipa_treated | as.factor(country) + as.factor(year) | 0 | country"))
       regression <- lfe::felm(form, data = data)
     }
   }
@@ -81,7 +92,7 @@ run_jpal_regressions <- function(outcome, data = freqs_panel, specification, con
   ### OLS Event Study Specification
   if(specification == "ols-event-study"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ i(time_to_jpal, ever_jpal, ref = -1) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated)"))
+      form <- as.formula(paste0(outcome, " ~ i(time_to_jpal, ever_jpal, ref = -1) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated) + as.factor(ipa_treated)"))
       regression <- fixest::feols(form, cluster = ~country, data = data, se = "cluster")
     } else {
       form <- as.formula(paste0(outcome, " ~ i(time_to_jpal, ever_jpal, ref = -1) | as.factor(country) + as.factor(year)"))
@@ -92,7 +103,7 @@ run_jpal_regressions <- function(outcome, data = freqs_panel, specification, con
   ### Sun & Abraham Event Study Specification
   if(specification == "sa-event-study"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ sunab(jpal, time_to_jpal) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated)"))
+      form <- as.formula(paste0(outcome, " ~ sunab(jpal, time_to_jpal) + log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent) + as.factor(igc_treated) + as.factor(ipa_treated)"))
       regression <- fixest::feols(form, cluster = ~country, data = data, se = "cluster")
     } else {
       form <- as.formula(paste0(outcome, " ~ sunab(jpal, time_to_jpal) | as.factor(country) + as.factor(year)"))
@@ -111,13 +122,25 @@ run_jpal_regressions <- function(outcome, data = freqs_panel, specification, con
     }
   }
   
+  ### OLS Binary Difference-in-Differences Specification
+  if(specification == "ols-binary-did-pop"){
+    if(controls == TRUE){
+      form <- as.formula(paste0(outcome, " ~ jpal_treated*log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent)  + as.factor(igc_treated) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    } else {
+      form <- as.formula(paste0(outcome, " ~ jpal_treated | as.factor(country) + as.factor(year) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    }
+  }
+  
+  
   ### OLS Binary Difference-in-Differences Specification w/ Region Fixed Effects
   if(specification == "ols-binary-did-region-fes"){
     if(controls == TRUE){
-      form <- as.formula(paste0(outcome, " ~ jpal_treated + log(population) + log(gdp) + as.factor(continent)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(igc_treated) + as.factor(independent) | 0 | country"))
+      form <- as.formula(paste0(outcome, " ~ jpal_treated + log(population) + log(gdp) + as.factor(region)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(igc_treated) + as.factor(independent) | 0 | country"))
       regression <- lfe::felm(form, data = data)
     } else {
-      form <- as.formula(paste0(outcome, " ~ jpal_treated | as.factor(country) + as.factor(year) + as.factor(continent)*as.factor(year) | 0 | country"))
+      form <- as.formula(paste0(outcome, " ~ jpal_treated | as.factor(country) + as.factor(year) + as.factor(region)*as.factor(year) | 0 | country"))
       regression <- lfe::felm(form, data = data)
     }
   }
@@ -143,14 +166,25 @@ run_jpal_regressions <- function(outcome, data = freqs_panel, specification, con
       regression <- lfe::felm(form, data = data)
     }
   }
+  
+  ### OLS Binary Difference-in-Differences Specification
+  if(specification == "ols-binary-did-both-pop"){
+    if(controls == TRUE){
+      form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated + log(population) + ipa_treated:log(population) + jpal_treated:log(population) + log(gdp) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent)  + as.factor(igc_treated) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    } else {
+      form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated | as.factor(country) + as.factor(year) | 0 | country"))
+      regression <- lfe::felm(form, data = data)
+    }
+  }
     
     ### OLS Binary Difference-in-Differences Specification
     if(specification == "ols-binary-did-both-region-fes"){
       if(controls == TRUE){
-        form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated + log(population) + log(gdp) + as.factor(continent)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent)  + as.factor(igc_treated) | 0 | country"))
+        form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated + log(population) + log(gdp) + as.factor(region)*as.factor(year) | as.factor(country) + as.factor(year) + as.factor(regime) + as.factor(conflict) + as.factor(independent)  + as.factor(igc_treated) | 0 | country"))
         regression <- lfe::felm(form, data = data)
       } else {
-        form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated + as.factor(continent)*as.factor(year) | as.factor(country) + as.factor(year) | 0 | country"))
+        form <- as.formula(paste0(outcome, " ~ jpal_treated + ipa_treated + as.factor(region)*as.factor(year) | as.factor(country) + as.factor(year) | 0 | country"))
         regression <- lfe::felm(form, data = data)
       }
     }

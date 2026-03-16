@@ -22,6 +22,12 @@ country_level %<>% full_join(., igc_openings, by = "country") %>%
   full_join(., jpal_openings, by = "country") %>%
   full_join(., ipa_openings, by = "country")
 
+### Merge with 3ie Data
+country_level %<>% full_join(., data_3ie, by = c("country", "year")) %>%
+  dplyr::mutate(number_3ie = case_when(
+    is.na(number_3ie) ~ 0,
+    TRUE ~ number_3ie))
+
 ### Create Additional J-PAL Coverage Variables
 country_level %<>%
   dplyr::mutate(jpal_ext_year = case_when(
@@ -42,7 +48,7 @@ for(t in 1975:1990){
           country %in% c("Estonia", "Latvia", "Lithuania", "Belarus", "Ukraine", 
                          "Azerbaijan", "Georgia", "Armenia", "Kazakhstan", "Tajikistan", 
                          "Kyrgyz Republic", "Uzbekistan", "Turkmenistan", "Moldova") ~
-          country_level$regime[country_level$country == "Russian Federation" & year == t],  # <- take first value
+          country_level$regime[country_level$country == "Russian Federation" & country_level$year == t][1],  # <- take first value
         TRUE ~ regime))}
 
 for(t in 1975:1991){
@@ -73,7 +79,7 @@ for(t in 1975:2010){
   country_level %<>%
     dplyr::mutate(
       regime = case_when(
-        year == t & country == "South Sudan" ~ country_level$regime[country_level$country == "Sudan" & year == t],
+        year == t & country == "South Sudan" ~ country_level$regime[country_level$country == "Sudan" & year == t][1],
         TRUE ~ regime))}
 
 for(t in 1975:1992){
@@ -371,6 +377,11 @@ country_level$bordering_dhs_treated <- ifelse(country_level$bordering_dhs > 0, 1
 country_level$bordering_ipa_treated <- ifelse(country_level$bordering_ipa > 0, 1, 0)
 country_level$bordering_jpal_treated <- ifelse(country_level$bordering_jpal > 0, 1, 0)
 
+### Merge in Overton Data
+country_level %<>% dplyr::left_join(., overton_panel, by = c("country", "year")) %>%
+  dplyr::mutate(frequency_policy_doc_rct = coalesce(frequency_policy_doc_rct,0),
+                frequency_policy_doc_econ = coalesce(frequency_policy_doc_econ, 0))
+
 create_freqs_panel <- function(dataset){
   
   ### Create Frequency Dataframe for 1995
@@ -378,7 +389,10 @@ create_freqs_panel <- function(dataset){
     dplyr::filter(!is.na(topic)) %>% group_by(topic) %>% 
     dplyr::summarize(
       frequency = n(),
-      frequency_rct = sum(rct))
+      frequency_rct = sum(rct),
+      frequency_did = sum(did),
+      frequency_rdd = sum(rdd),
+      frequency_lab = sum(lab))
   
   ### Add for Next 40 Years
   for(i in 1:29){
@@ -386,13 +400,17 @@ create_freqs_panel <- function(dataset){
       group_by(topic) %>% 
       dplyr::summarize(
         frequency = n(),
-        frequency_rct = sum(rct)) %>%
+        frequency_rct = sum(rct),
+        frequency_did = sum(did),
+        frequency_rdd = sum(rdd),
+        frequency_lab = sum(lab)) %>%
       ungroup()
     df0 <- full_join(df0, df1, by = "topic")}
   
   ### Clean Up Constructed Dataframe
   colnames(df0)[2:length(df0)] <- paste0(
-    c("frequency_", "frequency_rct_"), rep(1995:2024, each=2))
+    c("frequency_", "frequency_rct_", "frequency_did_", "frequency_rdd_",
+      "frequency_lab_"), rep(1995:2024, each=5))
   df0[is.na(df0)] <- 0
   df0 %<>% dplyr::rename(country = topic)
   

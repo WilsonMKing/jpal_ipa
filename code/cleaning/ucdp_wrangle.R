@@ -34,6 +34,7 @@ conflict_data %<>%
       country == "South Yemen" ~ "Yemen, Rep.",
       country == "Syria" ~ "Syrian Arab Republic",
       country == "United States of America" ~ "United States",
+      country == "Gambia" ~ "Gambia, The",
       country == "Vietnam (North Vietnam)" ~ "Vietnam",
       country == "Yemen (North Yemen)" ~ "Yemen, Rep.",
       country == "Zimbabwe (Rhodesia)" ~ "Zimbabwe",

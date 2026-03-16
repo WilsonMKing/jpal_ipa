@@ -2,10 +2,15 @@
 
 ################################################################################
 
+### Create Analysis Dataset
+freqs_panel <- create_freqs_panel(wos_metadata) %>%
+  dplyr::filter(year >= 1995 & year <= 2024) %>%
+  dplyr::filter(country %in% dev_world)
+
 ### Estimates BJS Event Study: IPA
 ipa_reg <- didimputation::did_imputation(
   data = freqs_panel,
-  yname = "frequency_rct",
+  yname = "frequency_policy_doc_rct",
   gname = "ipa_year",
   tname = "year",
   idname = "country_id",
@@ -18,7 +23,7 @@ ipa_df <- ipa_reg %<>% dplyr::mutate(term = as.numeric(term))
 ipa_df[nrow(ipa_df) + 1,] <- list("frequency_rct", -1, 0, 0, 0, 0)
 
 ### Trim Event Study
-ipa_df %<>% dplyr::filter(term >= -15 & term <= 15)
+ipa_df %<>% dplyr::filter(term >= -10 & term <= 12)
 
 ### Plot
 ggplot(ipa_df, aes(x = as.numeric(term), y = estimate, ymin = conf.low, ymax = conf.high)) +
@@ -27,19 +32,19 @@ ggplot(ipa_df, aes(x = as.numeric(term), y = estimate, ymin = conf.low, ymax = c
   geom_vline(xintercept = -1, linetype = 2) +
   geom_line(color = "darkgreen") +
   xlab("Years Relative to Treatment") +
-  ylab("Number of RCTs") +
+  ylab("Number of Policy Documents Referencing RCTs") +
   theme_bw() +
   theme(text = element_text("Times"))
 
-ggsave(paste0(exhibits, "ipa_bjs_event_study.jpeg"), plot = last_plot(),
-              units = "cm", width = 15, height = 10)
+ggsave(paste0(exhibits, "ipa_bjs_event_study_policy.jpeg"), plot = last_plot(),
+       units = "cm", width = 15, height = 10)
 
 ################################################################################
 
 ### Estimate BJS Event Study: J-PAL
 jpal_df <- didimputation::did_imputation(
   data = freqs_panel,
-  yname = "frequency_rct",
+  yname = "frequency_policy_doc_rct",
   gname = "jpal_year",
   tname = "year",
   idname = "country_id",
@@ -51,7 +56,7 @@ jpal_df <- didimputation::did_imputation(
 jpal_df[nrow(jpal_df) + 1,] <- list("frequency_rct", -1, 0, 0, 0, 0)
 
 ### Trim Event Study
-jpal_df %<>% dplyr::filter(term >= -15 & term <= 15)
+jpal_df %<>% dplyr::filter(term >= -10 & term <= 12)
 
 ggplot(jpal_df, aes(x = as.numeric(term), y = estimate, ymin = conf.low, ymax = conf.high)) +
   geom_point(color = "orange", size = 0.4) +
@@ -59,10 +64,11 @@ ggplot(jpal_df, aes(x = as.numeric(term), y = estimate, ymin = conf.low, ymax = 
   geom_vline(xintercept = -1, linetype = 2) +
   geom_line(color = "orange") +
   xlab("Years Relative to Treatment") +
-  ylab("Number of RCTs") +
+  ylab("Number of Policy Documents Referencing RCTs") +
   theme_bw() +
   theme(text = element_text("Times"))
 
 
-ggsave(paste0(exhibits, "jpal_bjs_event_study.jpeg"), plot = last_plot(),
+ggsave(paste0(exhibits, "jpal_bjs_event_study_policy.jpeg"), plot = last_plot(),
        units = "cm", width = 15, height = 10)
+

@@ -299,19 +299,49 @@ set.seed(62361)
 wos_metadata$topic <- mapply(assign_country, title = wos_metadata$title, abstract = wos_metadata$abstract)
 # save(wos_metadata, file = paste0(data, "wos_assigned_jpal_ipa.RData"))
 
-### Create RCT Indicator Variable
+### Create RCT Strings
 experiment_string <- paste(
-  "field experiment", "field-experiment", "randomi[sz]ed controlled trial",
-  "randomi[sz]ed experiment", "randomi[sz]ed evaluation", "randomized impact evaluation",
-  "randomi[sz]ed trial", "randomi[sz]ed control trial", "clinical trial", "[ ]rct[ ]", "[ ]rct?s[ ]",
-  sep = "|")
+  c("field[- ]?experiment", "randomi[sz]ed (controlled )?(trial|experiment|evaluation|impact evaluation)",
+    "clinical trial"," ?rcts? ?"), collapse = "|")
+
+### Create RDD Strings
+rdd_string <- paste(
+  c("regression discontinuit(y|ies)", "difference[- ]in discontinuit(y|ies)", "RD design",
+    "(discontinuit(y|ies) )?design", "spatial RD"), collapse = "|")
+
+### Create Diff-in-Diff Strings
+did_string <- paste(
+  c("two way fixed effect(s)?", "difference[- ]in[- ]difference",
+    "diff[- ]in[- ]diff", "triple diff"), collapse = "|")
+
+### Create Lab Experiment Strings
+lab_string <- paste(
+  c("lab(oratory)? experiment", "lab(oratory)? study"), collapse = "|")
 
 ### Create Topic Indicators
 wos_metadata %<>%
   dplyr::mutate(
-    rct = as.numeric(grepl(experiment_string, title, ignore.case = TRUE) | grepl(experiment_string, abstract, ignore.case = TRUE) | grepl(experiment_string, keywords, ignore.case = TRUE)))
-
-
+    rct = as.numeric(
+      grepl(experiment_string, title, ignore.case = TRUE) |
+        grepl(experiment_string, abstract, ignore.case = TRUE) |
+        grepl(experiment_string, keywords, ignore.case = TRUE)
+    ),
+    rdd = as.numeric(
+      grepl(rdd_string, title, ignore.case = TRUE) |
+        grepl(rdd_string, abstract, ignore.case = TRUE) |
+        grepl(rdd_string, keywords, ignore.case = TRUE)
+    ),
+    did = as.numeric(
+      grepl(did_string, title, ignore.case = TRUE) |
+        grepl(did_string, abstract, ignore.case = TRUE) |
+        grepl(did_string, keywords, ignore.case = TRUE)
+    ),
+    lab = as.numeric(
+      grepl(lab_string, title, ignore.case = TRUE) |
+        grepl(lab_string, abstract, ignore.case = TRUE) |
+        grepl(lab_string, keywords, ignore.case = TRUE)
+    )
+  )
 
 
 

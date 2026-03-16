@@ -45,8 +45,8 @@ source(paste0(cleaning, "vdem_wrangle.R")) # V-DEM data
 # source(paste0(cleaning, "web_of_science_wrangle.R")) # Web of Science meta-data
 
 ### Assign Countries
-set.seed(125161)
-wos_data$topic <- mapply(assign_country, title = wos_data$title, abstract = wos_data$abstract)
+# set.seed(125161)
+# wos_data$topic <- mapply(assign_country, title = wos_data$title, abstract = wos_data$abstract)
 
 ### Save (Assigned) Web of Science Meta-Data
 # save(wos_data, file = paste0(data, "wos_assigned_jpal_ipa.RData"))
